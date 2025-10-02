@@ -1,10 +1,12 @@
-import react,{useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 function Home() {
   const [departamentos, setDepartamentos] = useState(null);
   const [capitales, setCapitales] = useState(null);
+  const [modo, setModo] = useState("departamentos");
+  const [busqueda, setBusqueda] = useState("");
 
-    useEffect(() => {
+  useEffect(() => {
     const urlDpt =
       "https://gist.githubusercontent.com/diaztibata/fe3d238ee6b59ef71c8001654441a9f6/raw/4974a1b1cab3ac606dd96aa2d34d6e7c8e007daf/departamentosglobal.json";
     const urlCpt =
@@ -23,49 +25,75 @@ function Home() {
 
     fetchJson(urlDpt, setDepartamentos);
     fetchJson(urlCpt, setCapitales);
-
-    console.log(departamentos)
-
   }, []);
 
-    return(
-    <>
+  const getListaMostrar = () => {
+    if (modo === "departamentos" && departamentos) {
+      return departamentos.data?.dpt ?? [];
+    }
+    if (modo === "capitales" && capitales) {
+      return capitales.data?.cpt ?? [];
+    }
+    return [];
+  };
+
+  const lista = getListaMostrar();
+
+  const listaFiltrada = lista.filter((item) =>
+    item.nm.toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  return (
+    <div>
+
       <div>
-        <button>
+        <button onClick={() => setModo("departamentos")}>
           Mostrar Departamentos
         </button>
-        <button>Mostrar Capitales</button>
+        <button onClick={() => setModo("capitales")}>Mostrar Capitales</button>
       </div>
 
       <div>
         <input
           type="text"
           placeholder="Buscar por nombre..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
         />
       </div>
-      
-      <div className="lugar">
-       {
-        // verficar que capitales y capitales .data existen ates de mapear
-        ! capitales?(
-            <p>Cargando...</p>
+
+      <div>
+        {lista.length === 0 ? (
+          <p>Cargando datos...</p>
+        ) : listaFiltrada.length === 0 ? (
+          <p>No se encontraron resultados</p>
         ) : (
-            capitales.data.cpt.map((item)=>(
-        <p key={item.id}>
-            {item.nm}
-        </p>)
-        ))}
-        <p>Nombre<span> numero de votos</span></p>
-        <div>
-            <p>Candidatos:</p>
-            <ul>
-                <li>candidato 1</li>
-                <li>candidato 2</li>
-            </ul>
-        </div>
+          <ul>
+            {listaFiltrada.map((item) => (
+              <li key={item.id}>
+                <div>
+                  <strong>{item.nm}</strong> — Total de votos:{" "}
+                  {item.tvv ?? "N/A"}
+                </div>
+                {item.cdt && (
+                  <div>
+                    <p>Candidatos:</p>
+                    <ul>
+                      {item.cdt.map((cand) => (
+                        <li key={cand.id}>
+                          {cand.nm} — votos: {cand.tv}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-    </>
-)
+    </div>
+  );
 }
 
-export default Home
+export default Home;
